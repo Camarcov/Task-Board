@@ -1,5 +1,4 @@
 // Retrieve tasks and nextId from localStorage
-let taskList = JSON.parse(localStorage.getItem("tasks")) || [];
 let nextId = JSON.parse(localStorage.getItem("nextId"));
 
 //defining inputs for later use
@@ -7,6 +6,7 @@ const taskNameInput = $('#task')
 const taskDateInput = $('#datepicker')
 const taskDescInput = $('#description')
 
+//makes an array if there are no items named tasks in local storage 
 function storedTasks() {
     let taskList = JSON.parse(localStorage.getItem('tasks'));
 
@@ -22,15 +22,15 @@ function generateTaskId() {
     const taskId = dayjs().unix()
     return taskId
 }
-// Todo: create a function to create a task card
+// Todo: create a  to create a task card
 function createTaskCard(task) {
 
     //defining elements and adding class for task cards
     const taskCard = $('<div>')
-        .addClass('card draggable')
+        .addClass('card draggable my-2 bg-success')
         .attr('data-task-id', task.id)
     const cardName = $('<div>')
-        .addClass('card-header h4')
+        .addClass('card-header h4 border-light')
         .text(task.taskName)
     const cardBody = $('<div>')
         .addClass('card-body')
@@ -46,15 +46,19 @@ function createTaskCard(task) {
         .attr('data-task-id', task.id)
     cardDelete.on('click', handleDeleteTask);
 
-    //changing colors on cards depending on what column its in
+    //changing colors on cards depending on due date and status as long as the card status isnt done
     if (task.dueDate && task.status !== 'done') {
         const now = dayjs();
         const taskDueDate = dayjs(task.dueDate, 'DD/MM/YYYY');
-        if (now.isSame(taskDueDate, 'day')) {
-            taskCard.addClass('bg-warning text-white');
+        const warning = dayjs(task.dueDate).subtract(1, 'day')
+        if (now.isSame(taskDueDate, 'day') || now.isSame(warning, 'day')) {
+            taskCard.addClass('bg-warning text-black');
+            cardDelete.addClass('border-light')
         } else if (now.isAfter(taskDueDate)) {
             taskCard.addClass('bg-danger text-white');
-            cardDelete.addClass('border-light');
+            cardDelete.addClass('border-light')
+        } else {
+            taskCard.addClass('bg-info')
         }
     }
 
@@ -67,12 +71,18 @@ function createTaskCard(task) {
 
 // Todo: create a function to render the task list and make cards draggable
 function renderTaskList() {
-    const taskList = storedTasks()
+    const taskList = JSON.parse(localStorage.getItem('tasks'))
 
     // getting project card lanes
     const todo = $('#todo-cards')
+    //clears lane if status doesnt match
+    todo.empty()
+
     const inprog = $('#in-progress-cards')
+    inprog.empty()
+
     const done = $('#done-cards')
+    done.empty()
 
     //goes thru all the tasks and renders them in the lane
     for (let task of taskList) {
@@ -84,7 +94,7 @@ function renderTaskList() {
             done.append(createTaskCard(task))
         }
     }
-    
+
     //makes anything with class draggable actually draggable with jquery ui
     // this is done now because nothing is draggable when the page immediately loads
     $('.draggable').draggable({
@@ -138,16 +148,16 @@ function handleDeleteTask(event) {
         if (task.id === taskId) {
             taskList.splice(taskList.indexOf(task), 1)
         }
-    }) 
+    })
 
-    localStorage.setItem('task', JSON.stringify(taskList))
+    localStorage.setItem('tasks', JSON.stringify(taskList))
     renderTaskList();
 }
 
 // Todo: create a function to handle dropping a task into a new status lane
 function handleDrop(event, ui) {
     const taskList = storedTasks()
-    const taskId = ui.draggable[0].dataset.projectId;
+    const taskId = ui.draggable[0].dataset.taskId;
     const newStatus = event.target.id;
 
     for (let task of taskList) {
@@ -157,7 +167,7 @@ function handleDrop(event, ui) {
     }
 
     console.log('drop')
-    localStorage.setItem('task', JSON.stringify(taskList));
+    localStorage.setItem('tasks', JSON.stringify(taskList));
     renderTaskList()
 }
 
@@ -166,7 +176,7 @@ $(document).ready(function () {
 
     // on load renders lists
     renderTaskList()
-    
+
     //enables jqueryui's datepicker and droppable
     $(function () {
         $("#datepicker").datepicker({
@@ -174,14 +184,14 @@ $(document).ready(function () {
             changeYear: true,
         });
     })
-    
+
     $('.lane').droppable({
         accept: '.draggable',
         drop: handleDrop,
-      });
-    
+    });
 
+    //event listeners for form button and delete button
     $('form').on('submit', handleAddTask)
-    $('').on('click', handleDeleteTask)
+    $('btn-danger').on('click', handleDeleteTask)
 
 });
