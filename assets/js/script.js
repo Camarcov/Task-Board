@@ -1,6 +1,3 @@
-// Retrieve tasks and nextId from localStorage
-let nextId = JSON.parse(localStorage.getItem("nextId"));
-
 //defining inputs for later use
 const taskNameInput = $('#task')
 const taskDateInput = $('#datepicker')
@@ -140,20 +137,25 @@ function handleAddTask(event) {
     localStorage.setItem('tasks', JSON.stringify(taskList))
 
     renderTaskList()
+
+    //clearing forms
+    taskNameInput.val('')
+    taskDateInput.val('')
+    taskDescInput.val('')
 }
 
 // Todo: create a function to handle deleting a task
-function handleDeleteTask(event) {
+function handleDeleteTask() {
     const taskId = $(this).attr('data-task-id');
     const taskList = storedTasks().filter((task, index) => {
 
-        if (task.taskId === taskId) {
+        //checks if task.taskId is the same in value and type of taskId, since task.taskId is a number we have to use parseInt(taskId) to make that a number as well
+        if (task.taskId === parseInt(taskId)) {
             return false
         }
         return true
     })
 
-    console.log('delete')
     localStorage.setItem('tasks', JSON.stringify(taskList))
     renderTaskList();
 }
